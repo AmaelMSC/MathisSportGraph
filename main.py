@@ -8,9 +8,9 @@ import radar_facto as radfac
 
 
 def init(sheet_name_custom):
-    column_names, names, big_data = data.retrive_data(sheet_name_custom)
+    column_names, names, big_data, averages_data = data.retrive_data(sheet_name_custom)
     for name in column_names:
-        make_one(name, names, big_data, sheet_name_custom)
+        make_one(name, names, big_data, sheet_name_custom, averages_data)
 
 def data_gen(pname, names, big_data):
     #names = [tech_off_names, tech_def_names, athl_names, tact_names, ment_names]
@@ -24,7 +24,7 @@ def average(T):
 def averages(data):
     return [average(T) for T in data]
 
-def make_one(pname, names, big_data, sheet_name):
+def make_one(pname, names, big_data, sheet_name, averages_data):
     gen = data_gen(pname, names, big_data)
     titles = ["Techniques OFF", "Techniques DEF", "Athlétique", "Tactique", "Mentalité"]
 
@@ -37,12 +37,13 @@ def make_one(pname, names, big_data, sheet_name):
     row = 0
     col = 0
 
-    for title, (names, data) in zip(titles, gen):        
+    for title, (names, data), average in zip(titles, gen, averages_data):
         N = len(names)
         theta = radfac.radar_factory(N, frame='polygon')
 
         names.append(names[0])
         data.append(data[0])
+        average.append(average[0])
         theta = np.concatenate((theta, [theta[0]]))
 
         axs[row,col].set_ylim([0,20])
@@ -52,6 +53,7 @@ def make_one(pname, names, big_data, sheet_name):
         axs[row,col].set_thetagrids(theta * 180/np.pi, names)
         axs[row,col].xaxis.set_tick_params(pad=20)
         axs[row,col].fill(theta, data, facecolor='b', alpha=0.25, label='_nolegend_')
+        axs[row, col].fill(theta, average, facecolor='r', alpha = 0.50, label='_nolegend_')
 
         col += 1
         if col == 2:
@@ -60,6 +62,7 @@ def make_one(pname, names, big_data, sheet_name):
         
         names.pop()
         data.pop()
+        average.pop()
 
     theta = radfac.radar_factory(len(titles), frame='polygon')
     data = big_data[pname]
@@ -88,6 +91,7 @@ def verif_repertory_exists(repertory):
 
 
 if __name__ == '__main__':
+    if not os.path.exists("Joueurs"): os.makedirs("Joueurs")
     if sys.argv[1] == "all":
         for sheet_name in pd.ExcelFile("main.xlsx").sheet_names:
             verif_repertory_exists(sheet_name)
